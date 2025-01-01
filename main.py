@@ -9,7 +9,17 @@ load_dotenv()
 genai.configure(api_key=os.environ["API_KEY"])
 
 app = FastAPI()
-model = genai.GenerativeModel("gemini-2.0-flash-exp")
+
+# Use the standard model instead of experimental
+model = genai.GenerativeModel("gemini-pro")
+
+# Configure generation parameters
+generation_config = {
+    "temperature": 0.6,
+    "top_p": 0.8,
+    "top_k": 40,
+    "max_output_tokens": 2048,
+}
 
 origins = ["*"]
 
@@ -27,7 +37,20 @@ class Query(BaseModel):
 
 
 @app.post("/generate")
-def read_item(query: Query):
-    response = model.generate_content(query.q)
-    print(response.text)
-    return {"q": response.text}
+async def generate_content(query: Query):
+    try:
+        response = model.generate_content(
+            query.q,
+            generation_config=generation_config,
+        )
+
+        # Handle potential response issues
+        if not response.text:
+            return {"q": "No response generated. Please try again."}
+
+        print("Generated response:", response.text)  # Debug logging
+        return {"q": response.text}
+
+    except Exception as e:
+        print(f"Error generating content: {str(e)}")  # Debug logging
+        return {"q": f"Error generating content: {str(e)}"}
