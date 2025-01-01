@@ -9,16 +9,14 @@ load_dotenv()
 genai.configure(api_key=os.environ["API_KEY"])
 
 app = FastAPI()
-
-# Use the standard model instead of experimental
 model = genai.GenerativeModel("gemini-pro")
 
-# Configure generation parameters
+# Configure for more natural, conversational responses
 generation_config = {
-    "temperature": 0.6,
-    "top_p": 0.8,
+    "temperature": 0.8,  # Slightly higher for more natural language
+    "top_p": 0.9,
     "top_k": 40,
-    "max_output_tokens": 2048,
+    "max_output_tokens": 1024,  # Shorter for more focused summaries
 }
 
 origins = ["*"]
@@ -44,13 +42,11 @@ async def generate_content(query: Query):
             generation_config=generation_config,
         )
 
-        # Handle potential response issues
         if not response.text:
             return {"q": "No response generated. Please try again."}
 
-        print("Generated response:", response.text)  # Debug logging
         return {"q": response.text}
 
     except Exception as e:
-        print(f"Error generating content: {str(e)}")  # Debug logging
+        print(f"Error generating content: {str(e)}")
         return {"q": f"Error generating content: {str(e)}"}
